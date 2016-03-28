@@ -1,9 +1,10 @@
 #include <subhook.h>
 #include <blt/hook.hh>
-#include <cstdio>
+#include <iostream>
 #include <list>
 #include <dlfcn.h>
 
+using namespace std;
 namespace blt {
 
     std::list<lua_state*> activeStates;
@@ -47,7 +48,7 @@ namespace blt {
     dslUpdateDetour()
     {
         SubHook::ScopedRemove remove(&gameUpdateDetour);
-        fprintf(stderr, "dsl::EventManager::update() detour called\n");
+        cerr << "dsl::EventManager::update() detour called\n";
 
         return do_game_update();
     }
@@ -57,10 +58,10 @@ namespace blt {
     {
 #	define setcall(name) \
 	    ret = dlsym(dlHandle, #name); \
-	    fprintf(stderr, "%s = %p\n", #name, ret); \
+	    cerr << "%s = %p\n", #name, ret; \
 	    *(void **) (&name) = ret;
 
-        fprintf(stderr, "setting up lua function access\n");
+        cerr << "setting up lua function access\n";
 
         {
             void* ret;
@@ -89,13 +90,13 @@ namespace blt {
             setcall(luaL_unref);
 
 	    ret = dlsym(dlHandle, "_ZN3dsl12EventManager6updateEv");	// dsl::EventManager::update
-	    fprintf(stderr, "%s = %p\n", "_ZN3dsl12EventManager6updateEv", ret);
+	    cerr << "%s = %p\n", "_ZN3dsl12EventManager6updateEv", ret;
 	    *(void **) (&do_game_update) = ret;
 
             setcall(luaL_newstate);
         }
 
-        fprintf(stderr, "setting up intercepts\n");
+        cerr << "setting up intercepts\n";
 
         {
             gameUpdateDetour.Install((void *)do_game_update, (void *)dslUpdateDetour);
